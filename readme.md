@@ -13,6 +13,9 @@ Ini adalah program golang untuk crud contact sederhana membuat contact.
 - Untuk menjalankan aplikasi, ketik ```go run main.go``` atau ```make run```
 - Aplikasi running pada ```http://localhost:8000/```
 
+### OpenAPI
+Import file contact_management.openapi.json ke postman atau apidog
+
 ### Endpoint Auth dan Contact
 | Keterangan                     | URL                                          |
 |--------------------------------|----------------------------------------------|

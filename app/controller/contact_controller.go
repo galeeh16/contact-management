@@ -7,6 +7,7 @@ import (
 	"cobaaja/contact-management/utility"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -23,7 +24,51 @@ func NewContactController(repo *repository.ContactRepository) *ContactController
 }
 
 func (ctrl *ContactController) GetAllContact(ctx *fiber.Ctx) error {
-	return ctx.JSON("Not Implemented Yet.")
+	// Ambil query params
+	pageStr := ctx.Query("page", "1")
+	sizeStr := ctx.Query("size", "10")
+
+	// Konversi ke integer
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil || size < 1 {
+		size = 10
+	}
+
+	// ambil data pagination dari repository
+	contacts, total, err := ctrl.Repo.GetAllContact(page, size)
+	if err != nil {
+		return utility.ErrorResponse("Internal Server Error", nil, ctx)
+	}
+
+	// Mapping Contact ke Contacts' DTO
+	contactsDTO := make([]dto.ContactResponse, len(contacts))
+
+	for i, contact := range contacts {
+		contactsDTO[i] = dto.ContactResponse{
+			ID:        contact.ID,
+			FirstName: contact.FirstName,
+			LastName:  contact.LastName,
+			Phone:     contact.Phone,
+			CreatedAt: contact.CreatedAt,
+			UpdatedAt: contact.UpdatedAt,
+		}
+	}
+
+	// Hitung total halaman
+	totalPages := int((total + int64(size) - 1) / int64(size))
+
+	return utility.SuccessResponse("Success Get Data", fiber.Map{
+		"items":       contactsDTO,
+		"total":       total,
+		"page":        page,
+		"size":        size,
+		"total_pages": totalPages,
+	}, ctx)
 }
 
 func (ctrl *ContactController) CreateContact(ctx *fiber.Ctx) error {
@@ -123,5 +168,26 @@ func (ctrl *ContactController) UpdateContactByID(ctx *fiber.Ctx) error {
 }
 
 func (ctrl *ContactController) DeleteContactByID(ctx *fiber.Ctx) error {
-	return ctx.JSON("Not Implemented Yet.")
+	id := ctx.Params("id")
+	idInt, _ := strconv.ParseUint(id, 10, 64)
+
+	// find contact by id
+	_, err := ctrl.Repo.FindContactByID(idInt)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utility.BadRequestResponse("Contact "+id+"Not Found", nil, ctx)
+		} else {
+			fmt.Println(err.Error())
+			return utility.ErrorResponse("Internal Server Error", nil, ctx)
+		}
+	}
+
+	// delete contact by id
+	err = ctrl.Repo.DeleteContactByID(idInt)
+	if err != nil {
+		return utility.ErrorResponse("Internal Server Error", nil, ctx)
+	}
+
+	return utility.SuccessResponse("Success Deleting Contact", nil, ctx)
 }

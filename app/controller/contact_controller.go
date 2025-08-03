@@ -62,13 +62,14 @@ func (ctrl *ContactController) GetAllContact(ctx *fiber.Ctx) error {
 	// Hitung total halaman
 	totalPages := int((total + int64(size) - 1) / int64(size))
 
-	return utility.SuccessResponse("Success Get Data", fiber.Map{
-		"items":       contactsDTO,
-		"total":       total,
-		"page":        page,
-		"size":        size,
-		"total_pages": totalPages,
+	return utility.SuccessResponse("Success Get Data", dto.PaginationResponse{
+		Items:      contacts,
+		TotalItems: total,
+		Page:       page,
+		Size:       size,
+		TotalPages: totalPages,
 	}, ctx)
+
 }
 
 func (ctrl *ContactController) CreateContact(ctx *fiber.Ctx) error {

@@ -23,7 +23,7 @@ func ContactRoute(app *fiber.App, db *gorm.DB) {
 	contactPrivate := contactRoute.Use(middleware.JWTMiddleware)
 
 	contactPrivate.Get("/", contactCtrl.GetAllContact)
-	contactPrivate.Get("/:phone", contactCtrl.FindContactByPhone)
+	contactPrivate.Get("/:id", contactCtrl.FindContactByID)
 	contactPrivate.Post("/", contactCtrl.CreateContact)
 	contactPrivate.Put("/:id", contactCtrl.UpdateContactByID)
 	contactPrivate.Delete("/:id", contactCtrl.DeleteContactByID)

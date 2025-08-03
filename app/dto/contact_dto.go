@@ -27,6 +27,9 @@ type CreateContactResponse struct {
 }
 
 type UpdateContactRequest struct {
+	FirstName string `json:"first_name" validate:"required,min=3,max=100"`
+	LastName  string `json:"last_name" validate:"required,min=3,max=100"`
+	Phone     string `json:"phone" validate:"required,number,unique_contact_phone_edit"`
 }
 
 type UpdateContactResponse struct {

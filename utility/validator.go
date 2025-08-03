@@ -97,6 +97,8 @@ func (v *Validator) ValidateStruct(data any) map[string]string {
 				message = fmt.Sprintf(Unique, err.Value())
 			case "unique_contact_phone":
 				message = fmt.Sprintf(Unique, err.Value())
+			case "unique_contact_phone_edit":
+				message = fmt.Sprintf(Unique, err.Value())
 			case "unique_email":
 				message = fmt.Sprintf(Unique, err.Value())
 			case "unique_username":

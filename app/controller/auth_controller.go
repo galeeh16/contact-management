@@ -131,7 +131,7 @@ func (ctrl *AuthController) Me(ctx *fiber.Ctx) error {
 	// get user by username
 	user, err := ctrl.Repo.FindByUsername(username)
 	if err != nil {
-		return utility.BadRequestResponse("Username tidak ditemukan", nil, ctx)
+		return utility.BadRequestResponse("Username "+username+" not found", nil, ctx)
 	}
 
 	// mapping user ke dto

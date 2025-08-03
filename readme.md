@@ -20,7 +20,7 @@ Ini adalah program golang untuk crud contact sederhana membuat contact.
 | Login                          | [POST] localhost:8000/api/v1/auth/login      |
 | Me/Profile                     | [POST] localhost:8000/api/v1/auth/me         |
 | Get All Contact                | [GET] localhost:8000/api/v1/contacts         |
-| Find Contact by Phone          | [GET] localhost:8000/api/v1/contacts/:phone  |
+| Find Contact by ID             | [GET] localhost:8000/api/v1/contacts/:id     |
 | Create Contact                 | [POST] localhost:8000/api/v1/contacts        |
-| Update Contact by ID (belum diimplementasi) | [PUT] localhost:8000/api/v1/contacts/:id     |
+| Update Contact by ID           | [PUT] localhost:8000/api/v1/contacts/:id     |
 | Delete Contact by ID           | [DELETE] localhost:8000/api/v1/contacts/:id  |

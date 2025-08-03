@@ -63,7 +63,7 @@ func (ctrl *ContactController) GetAllContact(ctx *fiber.Ctx) error {
 	totalPages := int((total + int64(size) - 1) / int64(size))
 
 	return utility.SuccessResponse("Success Get Data", dto.PaginationResponse{
-		Items:      contacts,
+		Items:      contactsDTO,
 		TotalItems: total,
 		Page:       page,
 		Size:       size,
@@ -139,13 +139,39 @@ func (ctrl *ContactController) CreateContact(ctx *fiber.Ctx) error {
 	})
 }
 
-func (ctrl *ContactController) FindContactByPhone(ctx *fiber.Ctx) error {
-	phone := ctx.Params("phone")
+// func (ctrl *ContactController) FindContactByPhone(ctx *fiber.Ctx) error {
+// 	phone := ctx.Params("phone")
 
-	contact, err := ctrl.Repo.FindContactByPhone(phone)
+// 	contact, err := ctrl.Repo.FindContactByPhone(phone)
+// 	if err != nil {
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			return utility.BadRequestResponse("Contact "+phone+" not found", nil, ctx)
+// 		} else {
+// 			return utility.ErrorResponse("Internal Server Error", nil, ctx)
+// 		}
+// 	}
+
+// 	// mapping contact entity ke contact response
+// 	contactRes := &dto.ContactResponse{
+// 		ID:        contact.ID,
+// 		FirstName: contact.FirstName,
+// 		LastName:  contact.LastName,
+// 		Phone:     contact.Phone,
+// 		CreatedAt: contact.CreatedAt,
+// 		UpdatedAt: contact.UpdatedAt,
+// 	}
+
+// 	return utility.SuccessResponse("Success", contactRes, ctx)
+// }
+
+func (ctrl *ContactController) FindContactByID(ctx *fiber.Ctx) error {
+	id := ctx.Params("id", "0")
+	idInt, _ := strconv.ParseUint(id, 10, 64)
+
+	contact, err := ctrl.Repo.FindContactByID(idInt)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return utility.BadRequestResponse("Contact "+phone+" tidak ditemukan", nil, ctx)
+			return utility.BadRequestResponse("Contact "+id+" not found", nil, ctx)
 		} else {
 			return utility.ErrorResponse("Internal Server Error", nil, ctx)
 		}
@@ -165,7 +191,72 @@ func (ctrl *ContactController) FindContactByPhone(ctx *fiber.Ctx) error {
 }
 
 func (ctrl *ContactController) UpdateContactByID(ctx *fiber.Ctx) error {
-	return ctx.JSON("Not Implemented Yet.")
+	id := ctx.Params("id")
+	idInt, _ := strconv.ParseUint(id, 10, 64)
+
+	req := new(dto.UpdateContactRequest)
+
+	ctx.BodyParser(&req)
+
+	// validasi edit contact request
+	v := utility.NewValidator()
+
+	// register custom validasi unique contact phone number
+	v.Validate.RegisterValidation("unique_contact_phone_edit", func(fl validator.FieldLevel) bool {
+		existsPhone := ctrl.Repo.CheckExistsPhoneExceptID(req.Phone, idInt)
+		return !existsPhone
+	})
+
+	arrayError := v.ValidateStruct(req)
+	if arrayError != nil {
+		return utility.BadRequestResponse("Invalid Data", arrayError, ctx)
+	}
+
+	// cek exists contact by id
+	_, err := ctrl.Repo.FindContactByID(idInt)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utility.BadRequestResponse("Contact "+id+" Not Found.", nil, ctx)
+		} else {
+			fmt.Println(err.Error())
+			return utility.ErrorResponse("Internal Server Error", nil, ctx)
+		}
+	}
+
+	// ambil user_id dari ctx local yang dibuat di jwt middleware
+	userId, ok := ctx.Locals("user_id").(uint64)
+	if !ok {
+		return utility.BadRequestResponse("User ID tidak valid", nil, ctx)
+	}
+
+	// mapping request dto struct to entity contact
+	dataUpdate := entity.Contact{
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Phone:     req.Phone,
+		UserID:    userId,
+	}
+
+	// update datanya dalam transaction. return any error will rollback
+	err = ctrl.Repo.DB.Transaction(func(tx *gorm.DB) error {
+		_, err = ctrl.Repo.UpdateContactByID(idInt, dataUpdate)
+
+		if err != nil {
+			return err
+		}
+
+		// return nil == commit
+		return nil
+	})
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return utility.ErrorResponse("Internal Server Error", nil, ctx)
+	}
+
+	// sukses
+	return utility.SuccessResponse("Success Updating Contact", nil, ctx)
 }
 
 func (ctrl *ContactController) DeleteContactByID(ctx *fiber.Ctx) error {
@@ -177,7 +268,7 @@ func (ctrl *ContactController) DeleteContactByID(ctx *fiber.Ctx) error {
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return utility.BadRequestResponse("Contact "+id+"Not Found", nil, ctx)
+			return utility.BadRequestResponse("Contact "+id+" Not Found.", nil, ctx)
 		} else {
 			fmt.Println(err.Error())
 			return utility.ErrorResponse("Internal Server Error", nil, ctx)

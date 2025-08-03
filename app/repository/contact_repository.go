@@ -61,6 +61,18 @@ func (repo *ContactRepository) CheckExistsPhone(phone string) bool {
 	return found
 }
 
+func (repo *ContactRepository) CheckExistsPhoneExceptID(phone string, id uint64) bool {
+	var found bool
+	err := repo.DB.Raw("SELECT EXISTS(SELECT 1 FROM contacts WHERE id <> ? AND phone = ?)", id, phone).Scan(&found).Error
+
+	if err != nil {
+		log.Printf("Error when validasi CheckExistsPhoneEdit: %v", err.Error())
+		return true
+	}
+
+	return found
+}
+
 func (repo *ContactRepository) FindContactByPhone(phone string) (*entity.Contact, error) {
 	var contact entity.Contact
 
@@ -93,4 +105,16 @@ func (repo *ContactRepository) DeleteContactByID(id uint64) error {
 	}
 
 	return nil
+}
+
+func (repo *ContactRepository) UpdateContactByID(id uint64, dataUpdate entity.Contact) (*entity.Contact, error) {
+	var contact entity.Contact
+
+	err := repo.DB.Model(&entity.Contact{}).Where("id = ?", id).Updates(dataUpdate).Scan(&contact).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &contact, nil
 }

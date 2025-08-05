@@ -3,3 +3,4 @@
 .fleet
 /build
 /vendor
+/logs

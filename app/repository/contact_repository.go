@@ -12,7 +12,9 @@ type ContactRepository struct {
 }
 
 func NewContactRepository(db *gorm.DB) *ContactRepository {
-	return &ContactRepository{DB: db}
+	return &ContactRepository{
+		DB: db,
+	}
 }
 
 func (repo *ContactRepository) GetAllContact(page int, size int) ([]entity.Contact, int64, error) {
@@ -34,6 +36,8 @@ func (repo *ContactRepository) GetAllContact(page int, size int) ([]entity.Conta
 	if err != nil {
 		return nil, 0, err
 	}
+
+	// repo.Logger.Info("Query Get List All")
 
 	return contacts, total, nil
 }

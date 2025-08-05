@@ -69,6 +69,7 @@ func (ctrl *AuthController) Register(ctx *fiber.Ctx) error {
 }
 
 func (ctrl *AuthController) Login(ctx *fiber.Ctx) error {
+
 	req := new(dto.LoginRequest)
 
 	// bind request ke struct

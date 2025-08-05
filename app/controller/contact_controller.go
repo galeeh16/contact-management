@@ -20,7 +20,9 @@ type ContactController struct {
 
 // initialize contact controller
 func NewContactController(repo *repository.ContactRepository) *ContactController {
-	return &ContactController{Repo: repo}
+	return &ContactController{
+		Repo: repo,
+	}
 }
 
 func (ctrl *ContactController) GetAllContact(ctx *fiber.Ctx) error {

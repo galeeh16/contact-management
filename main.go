@@ -23,6 +23,9 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	// init logger
+	// logger := config.NewLogger()
+
 	// Fiber App Init
 	app := fiber.New(fiber.Config{
 		AppName:      os.Getenv("APP_NAME"),
@@ -36,6 +39,23 @@ func main() {
 
 	// Aktifkan kompresi untuk mengurangi ukuran respons
 	app.Use(compress.New())
+
+	// // middleware trace id
+	// app.Use(func(ctx *fiber.Ctx) error {
+	// 	traceID := uuid.New().String()
+
+	// 	ctx.Locals("trace_id", traceID)
+
+	// 	reqLogger := logger.WithFields(logrus.Fields{
+	// 		"trace_id": traceID,
+	// 	})
+
+	// 	ctx.Locals("logger", reqLogger)
+
+	// 	reqLogger.Info(fmt.Sprintf("%s %s", ctx.Method(), ctx.Path()))
+
+	// 	return ctx.Next()
+	// })
 
 	// load routes
 	route.LoadRoutes(app, db)

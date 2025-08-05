@@ -5,6 +5,8 @@ Ini adalah program golang untuk crud contact sederhana membuat contact.
 - [gorm](https://gorm.io/)
 - [godotenv](https://github.com/joho/godotenv)
 - [golang-jwt](https://github.com/golang-jwt/jwt)
+- [logrus](https://github.com/sirupsen/logrus)
+- [lumberjack](https://github.com/natefinch/lumberjack)
 
 ### Untuk menjalankan aplikasi
 - Copy file ```.env.example``` ke file ```.env``` (sesuaikan isinya)

@@ -7,27 +7,32 @@ import (
 	"log"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 // Repository Implementation
 type UserRepository struct {
-	DB *gorm.DB
+	DB     *gorm.DB
+	Logger *logrus.Logger
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepository {
+func NewUserRepository(db *gorm.DB, logger *logrus.Logger) *UserRepository {
 	return &UserRepository{
-		DB: db,
+		DB:     db,
+		Logger: logger,
 	}
 }
 
 func (repo *UserRepository) FindByUsername(username string) (*entity.User, error) {
+	repo.Logger.Info("Find by username: " + username)
 	var user entity.User
 	err := repo.DB.Model(entity.User{}).Where("username = ?", username).Take(&user).Error
 	return &user, err
 }
 
 func (repo *UserRepository) CheckExistUsername(username string) bool {
+	repo.Logger.Info("Check exist by username: " + username)
 	var found bool
 	err := repo.DB.Raw("SELECT EXISTS(SELECT 1 FROM users WHERE username = ?)", username).Scan(&found).Error
 
@@ -40,6 +45,7 @@ func (repo *UserRepository) CheckExistUsername(username string) bool {
 }
 
 func (repo *UserRepository) CreateUser(tx *gorm.DB, dto *dto.RegisterRequest) (*entity.User, error) {
+	repo.Logger.Info("Create User")
 	var err error
 	bcryptPassword, err := utility.HashPassword(dto.Password)
 

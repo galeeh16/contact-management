@@ -8,16 +8,21 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type AuthController struct {
-	Repo *repository.UserRepository
+	Repo   *repository.UserRepository
+	Logger *logrus.Logger
 }
 
-func NewAuthController(repo *repository.UserRepository) *AuthController {
-	return &AuthController{Repo: repo}
+func NewAuthController(repo *repository.UserRepository, logger *logrus.Logger) *AuthController {
+	return &AuthController{
+		Repo:   repo,
+		Logger: logger,
+	}
 }
 
 func (ctrl *AuthController) Register(ctx *fiber.Ctx) error {
@@ -50,6 +55,7 @@ func (ctrl *AuthController) Register(ctx *fiber.Ctx) error {
 	// create user
 	newUser, err := ctrl.Repo.CreateUser(tx, req)
 	if err != nil {
+		tx.Rollback()
 		return utility.ErrorResponse("Failed to Create User", err.Error(), ctx)
 	}
 

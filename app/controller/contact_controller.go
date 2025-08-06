@@ -11,17 +11,20 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type ContactController struct {
-	Repo *repository.ContactRepository
+	Repo   *repository.ContactRepository
+	Logger *logrus.Logger
 }
 
 // initialize contact controller
-func NewContactController(repo *repository.ContactRepository) *ContactController {
+func NewContactController(repo *repository.ContactRepository, logger *logrus.Logger) *ContactController {
 	return &ContactController{
-		Repo: repo,
+		Repo:   repo,
+		Logger: logger,
 	}
 }
 
@@ -29,6 +32,8 @@ func (ctrl *ContactController) GetAllContact(ctx *fiber.Ctx) error {
 	// Ambil query params
 	pageStr := ctx.Query("page", "1")
 	sizeStr := ctx.Query("size", "10")
+
+	ctrl.Logger.WithContext(ctx.Context())
 
 	// Konversi ke integer
 	page, err := strconv.Atoi(pageStr)

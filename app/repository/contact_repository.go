@@ -4,16 +4,19 @@ import (
 	"cobaaja/contact-management/app/entity"
 	"log"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type ContactRepository struct {
-	DB *gorm.DB
+	DB     *gorm.DB
+	Logger *logrus.Logger
 }
 
-func NewContactRepository(db *gorm.DB) *ContactRepository {
+func NewContactRepository(db *gorm.DB, logger *logrus.Logger) *ContactRepository {
 	return &ContactRepository{
-		DB: db,
+		DB:     db,
+		Logger: logger,
 	}
 }
 

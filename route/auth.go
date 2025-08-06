@@ -6,14 +6,15 @@ import (
 	"cobaaja/contact-management/app/repository"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
-func AuthRoute(app *fiber.App, db *gorm.DB) {
+func AuthRoute(app *fiber.App, db *gorm.DB, logger *logrus.Logger) {
 	auth := app.Group("/api/v1/auth")
 
-	userRepo := repository.NewUserRepository(db)
-	authCtrl := controller.NewAuthController(userRepo)
+	userRepo := repository.NewUserRepository(db, logger)
+	authCtrl := controller.NewAuthController(userRepo, logger)
 
 	auth.Post("/register", authCtrl.Register)
 	auth.Post("/login", authCtrl.Login)

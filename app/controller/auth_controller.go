@@ -3,6 +3,7 @@ package controller
 import (
 	"cobaaja/contact-management/app/dto"
 	"cobaaja/contact-management/app/repository"
+	"cobaaja/contact-management/config"
 	"cobaaja/contact-management/utility"
 	"errors"
 
@@ -14,14 +15,16 @@ import (
 )
 
 type AuthController struct {
-	Repo   *repository.UserRepository
-	Logger *logrus.Logger
+	Repo      *repository.UserRepository
+	Logger    *logrus.Logger
+	Validator *config.Validator
 }
 
-func NewAuthController(repo *repository.UserRepository, logger *logrus.Logger) *AuthController {
+func NewAuthController(repo *repository.UserRepository, logger *logrus.Logger, validator *config.Validator) *AuthController {
 	return &AuthController{
-		Repo:   repo,
-		Logger: logger,
+		Repo:      repo,
+		Logger:    logger,
+		Validator: validator,
 	}
 }
 
@@ -31,19 +34,19 @@ func (ctrl *AuthController) Register(ctx *fiber.Ctx) error {
 	// binding request ke struct
 	ctx.BodyParser(&req)
 
-	// validasi requestnya
-	v := utility.NewValidator()
+	// register tag json nya
+	ctrl.Validator.RegisterTagJSON()
 
 	// validasi unique username
-	v.Validate.RegisterValidation("unique_username", func(fl validator.FieldLevel) bool {
+	ctrl.Validator.Validate.RegisterValidation("unique_username", func(fl validator.FieldLevel) bool {
 		existsUsername := ctrl.Repo.CheckExistUsername(req.Username)
 		return !existsUsername
 	})
 
 	// validasi strong password
-	v.Validate.RegisterValidation("strong_password", utility.RegisterStrongPasswordValidation)
+	ctrl.Validator.Validate.RegisterValidation("strong_password", utility.RegisterStrongPasswordValidation)
 
-	arrayError := v.ValidateStruct(req)
+	arrayError := ctrl.Validator.ValidateStruct(req)
 
 	if arrayError != nil {
 		return utility.BadRequestResponse("Invalid Data", arrayError, ctx)
@@ -75,16 +78,15 @@ func (ctrl *AuthController) Register(ctx *fiber.Ctx) error {
 }
 
 func (ctrl *AuthController) Login(ctx *fiber.Ctx) error {
-
 	req := new(dto.LoginRequest)
 
 	// bind request ke struct
 	ctx.BodyParser(&req)
 
-	// validasi login request
-	v := utility.NewValidator()
+	// register tag json nya
+	ctrl.Validator.RegisterTagJSON()
 
-	arrayError := v.ValidateStruct(req)
+	arrayError := ctrl.Validator.ValidateStruct(req)
 
 	if arrayError != nil {
 		return utility.BadRequestResponse("Invalid Data", arrayError, ctx)

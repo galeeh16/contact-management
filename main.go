@@ -24,8 +24,11 @@ func main() {
 	// Fiber App Init
 	app := config.NewFiber(logger)
 
+	// init validator
+	validator := config.NewValidator()
+
 	// load routes
-	route.LoadRoutes(app, db, logger)
+	route.LoadRoutes(app, db, logger, validator)
 
 	app.Listen(fmt.Sprintf(":%s", os.Getenv("APP_PORT")))
 }

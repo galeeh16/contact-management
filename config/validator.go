@@ -1,4 +1,4 @@
-package utility
+package config
 
 import (
 	"fmt"
@@ -6,6 +6,31 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+)
+
+// buat message validator (sesuai abjad A-Z)
+const (
+	Unknown = "Unknown message for Tag '%s'" // default unhandled message
+
+	Aplha               = "The %s field must only contain letters."
+	AlphaNum            = "The %s field must only contain letters and numbers."
+	Boolean             = "The %s field must be true or false."
+	Datetime            = "The %s field must match the format %s."
+	Eqfield             = "%s must be same with %s."
+	GreatherThan        = "The %s field must be greater than %s."
+	GreatherThanOrEqual = "The %s field must be greater than or equal to %s."
+	Length              = "The %s field must be %s digits."
+	LessThan            = "The %s field must be less than %s."
+	LessThanOrEqual     = "The %s field must be less than or equal to %s."
+	Max                 = "The %s field must not be greater than %s characters."
+	MimeType            = "%s must be: %s."
+	Min                 = "The %s field must be at least %s characters."
+	Number              = "The %s must be a valid number."
+	Numeric             = "The %s must be numeric."
+	OneOf               = "The selected %s is invalid."
+	Required            = "The %s field is required."
+	StrongPassword      = "%s minimal 8 karakter, harus mengandung huruf besar, huruf kecil, angka."
+	Unique              = "%s has been taken."
 )
 
 // Validator adalah wrapper untuk validator instance
@@ -16,41 +41,37 @@ type Validator struct {
 // NewValidator membuat instance validator baru dengan json format
 func NewValidator() *Validator {
 	v := validator.New()
-
-	// Gunakan nama field dari tag json
-	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := fld.Tag.Get("json")
-		if name == "" {
-			name = fld.Name
-		}
-		// Menghapus ",omitempty" jika ada di tag json
-		return strings.SplitN(name, ",", 2)[0]
-	})
-
 	return &Validator{Validate: v}
 }
 
-func NewValidatorFormData() *Validator {
-	v := validator.New()
-
-	// Gunakan nama field dari tag json
-	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+// RegisterTagJSON mendaftarkan fungsi untuk menggunakan nama field dari tag json
+func (v *Validator) RegisterTagJSON() {
+	v.Validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := fld.Tag.Get("form")
-		// fmt.Println("name form", name)
 		if name == "" {
 			name = fld.Name
 		}
 		// Menghapus ",omitempty" jika ada di tag json
 		return strings.SplitN(name, ",", 2)[0]
 	})
+}
 
-	return &Validator{Validate: v}
+// RegisterTagForm mendaftarkan fungsi untuk menggunakan nama field dari tag form
+func (v *Validator) RegisterTagForm() {
+	v.Validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := fld.Tag.Get("form")
+		if name == "" {
+			name = fld.Name
+		}
+		// Menghapus ",omitempty" jika ada di tag form
+		return strings.SplitN(name, ",", 2)[0]
+	})
 }
 
 // ValidateStruct memvalidasi struct dan mengembalikan ErrorResponse jika ada error
 func (v *Validator) ValidateStruct(data any) map[string]string {
 	if err := v.Validate.Struct(data); err != nil {
-		errs := make(map[string]string)
+		arrayError := make(map[string]string)
 
 		for _, err := range err.(validator.ValidationErrors) {
 			field := strings.ToLower(err.Field())
@@ -109,10 +130,10 @@ func (v *Validator) ValidateStruct(data any) map[string]string {
 			}
 
 			// errs[err.Field()] = err.Translate(v.validate.Translator)
-			errs[field] = message
+			arrayError[field] = message
 		}
 		// return &ErrorResponse{Errors: errs}
-		return errs
+		return arrayError
 	}
 	return nil
 }

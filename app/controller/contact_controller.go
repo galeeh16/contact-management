@@ -4,6 +4,7 @@ import (
 	"cobaaja/contact-management/app/dto"
 	"cobaaja/contact-management/app/entity"
 	"cobaaja/contact-management/app/repository"
+	"cobaaja/contact-management/config"
 	"cobaaja/contact-management/utility"
 	"errors"
 	"fmt"
@@ -16,15 +17,17 @@ import (
 )
 
 type ContactController struct {
-	Repo   *repository.ContactRepository
-	Logger *logrus.Logger
+	Repo      *repository.ContactRepository
+	Logger    *logrus.Logger
+	Validator *config.Validator
 }
 
 // initialize contact controller
-func NewContactController(repo *repository.ContactRepository, logger *logrus.Logger) *ContactController {
+func NewContactController(repo *repository.ContactRepository, logger *logrus.Logger, validator *config.Validator) *ContactController {
 	return &ContactController{
-		Repo:   repo,
-		Logger: logger,
+		Repo:      repo,
+		Logger:    logger,
+		Validator: validator,
 	}
 }
 
@@ -85,16 +88,16 @@ func (ctrl *ContactController) CreateContact(ctx *fiber.Ctx) error {
 	// bind request into struct
 	ctx.BodyParser(&req)
 
-	// validasi request struct
-	v := utility.NewValidator()
+	// bind json tag validator
+	ctrl.Validator.RegisterTagJSON()
 
 	// register custom validasi unique contact phone number
-	v.Validate.RegisterValidation("unique_contact_phone", func(fl validator.FieldLevel) bool {
+	ctrl.Validator.Validate.RegisterValidation("unique_contact_phone", func(fl validator.FieldLevel) bool {
 		existsPhone := ctrl.Repo.CheckExistsPhone(req.Phone)
 		return !existsPhone
 	})
 
-	arrayError := v.ValidateStruct(req)
+	arrayError := ctrl.Validator.ValidateStruct(req)
 
 	if arrayError != nil {
 		return utility.BadRequestResponse("Invalid Data", arrayError, ctx)
@@ -205,16 +208,16 @@ func (ctrl *ContactController) UpdateContactByID(ctx *fiber.Ctx) error {
 
 	ctx.BodyParser(&req)
 
-	// validasi edit contact request
-	v := utility.NewValidator()
+	// bind json tag validator
+	ctrl.Validator.RegisterTagJSON()
 
 	// register custom validasi unique contact phone number
-	v.Validate.RegisterValidation("unique_contact_phone_edit", func(fl validator.FieldLevel) bool {
+	ctrl.Validator.Validate.RegisterValidation("unique_contact_phone_edit", func(fl validator.FieldLevel) bool {
 		existsPhone := ctrl.Repo.CheckExistsPhoneExceptID(req.Phone, idInt)
 		return !existsPhone
 	})
 
-	arrayError := v.ValidateStruct(req)
+	arrayError := ctrl.Validator.ValidateStruct(req)
 	if arrayError != nil {
 		return utility.BadRequestResponse("Invalid Data", arrayError, ctx)
 	}

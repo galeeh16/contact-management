@@ -24,4 +24,5 @@ func AuthRoute(app *fiber.App, db *gorm.DB, logger *logrus.Logger, validator *co
 	authPrivate := auth.Use(middleware.JWTMiddleware)
 
 	authPrivate.Post("/me", authCtrl.Me)
+	authPrivate.Post("/refresh-token", authCtrl.RefreshToken)
 }

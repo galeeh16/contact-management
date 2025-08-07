@@ -5,8 +5,11 @@ import (
 	"cobaaja/contact-management/app/entity"
 	"cobaaja/contact-management/utility"
 	"log"
+	"os"
+	"strconv"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -22,6 +25,31 @@ func NewUserRepository(db *gorm.DB, logger *logrus.Logger) *UserRepository {
 		DB:     db,
 		Logger: logger,
 	}
+}
+
+func (repo *UserRepository) CreateJwtToken(user *entity.User) (string, error) {
+	var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+	var ttlMinute, _ = strconv.ParseInt(os.Getenv("JWT_TTL"), 10, 64)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": user.Username,
+		"user_id":  user.ID,
+		"exp":      time.Now().Add(time.Hour * time.Duration(ttlMinute)).Unix(), // Token berlaku 2 jam
+	})
+	return token.SignedString(jwtSecret)
+}
+
+func (repo *UserRepository) CreateJwtRefreshToken(user *entity.User) (string, error) {
+	var jwtRefreshSecret = []byte(os.Getenv("JWT_REFRESH_SECRET"))
+	var ttlMinute, _ = strconv.ParseInt(os.Getenv("JWT_REFRESH_TTL"), 10, 64)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username":   user.Username,
+		"user_id":    user.ID,
+		"is_refresh": true,
+		"exp":        time.Now().Add(time.Minute * time.Duration(ttlMinute)).Unix(), // Token berlaku 1 minggu
+	})
+	return token.SignedString(jwtRefreshSecret)
 }
 
 func (repo *UserRepository) FindByUsername(username string) (*entity.User, error) {

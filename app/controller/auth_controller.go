@@ -6,9 +6,11 @@ import (
 	"cobaaja/contact-management/config"
 	"cobaaja/contact-management/utility"
 	"errors"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -115,13 +117,22 @@ func (ctrl *AuthController) Login(ctx *fiber.Ctx) error {
 	}
 
 	// create token jwt
-	jwtToken, err := utility.CreateJwtToken(user)
+	jwtToken, err := ctrl.Repo.CreateJwtToken(user)
 	if err != nil {
 		return utility.ErrorResponse("Failed to create token", nil, ctx)
 	}
 
+	// generate refresh token
+	refreshJwtToken, err := ctrl.Repo.CreateJwtRefreshToken(user)
+	if err != nil {
+		return utility.ErrorResponse("Failed to create refresh token", nil, ctx)
+	}
+
+	// generate refresh token
+
 	return utility.SuccessResponse("Login Success", fiber.Map{
-		"access_token": jwtToken,
+		"access_token":  jwtToken,
+		"refresh_token": refreshJwtToken,
 		"user": fiber.Map{
 			"id":       user.ID,
 			"username": user.Username,
@@ -153,4 +164,78 @@ func (ctrl *AuthController) Me(ctx *fiber.Ctx) error {
 	}
 
 	return utility.SuccessResponse("Success", response, ctx)
+}
+
+type request struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+func (ctrl *AuthController) RefreshToken(ctx *fiber.Ctx) error {
+	req := new(request)
+
+	ctx.BodyParser(&req)
+
+	// bind jsonnya
+	ctrl.Validator.RegisterTagJSON()
+
+	// validasi
+	arrayError := ctrl.Validator.ValidateStruct(req)
+	if arrayError != nil {
+		return utility.BadRequestResponse("Invalid Data", arrayError, ctx)
+	}
+
+	jwtRefreshSecret := []byte(os.Getenv("JWT_REFRESH_SECRET"))
+
+	// Parse dan verifikasi token
+	token, err := jwt.ParseWithClaims(req.RefreshToken, &dto.JwtLocalsClaims{}, func(token *jwt.Token) (any, error) {
+		// Validasi signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fiber.NewError(fiber.StatusUnauthorized, "Unexpected signing method")
+		}
+		return jwtRefreshSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		return utility.UnauthenticatedResponse("Invalid Refresh Token", nil, ctx)
+	}
+
+	claims, ok := token.Claims.(*dto.JwtLocalsClaims)
+
+	// Validasi token dan claims
+	if !ok {
+		return utility.UnauthenticatedResponse("Invalid Token Claims", nil, ctx)
+	}
+
+	// get user by username
+	user, err := ctrl.Repo.FindByUsername(claims.Username)
+	// kalo error, karena record tidak ketemu atau error kodingan
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utility.BadRequestResponse("Username not found", nil, ctx)
+		} else {
+			return utility.ErrorResponse("Internal Server Error", err.Error(), ctx)
+		}
+	}
+
+	// generate new access token
+	jwtToken, err := ctrl.Repo.CreateJwtToken(user)
+	if err != nil {
+		return utility.ErrorResponse("Failed to create token", nil, ctx)
+	}
+
+	// generate refresh token
+	refreshJwtToken, err := ctrl.Repo.CreateJwtRefreshToken(user)
+	if err != nil {
+		return utility.ErrorResponse("Failed to create refresh token", nil, ctx)
+	}
+
+	return utility.SuccessResponse("Refresh Token Success", fiber.Map{
+		"access_token":  jwtToken,
+		"refresh_token": refreshJwtToken,
+		"user": fiber.Map{
+			"id":       user.ID,
+			"username": user.Username,
+			"name":     user.Name,
+		},
+	}, ctx)
 }

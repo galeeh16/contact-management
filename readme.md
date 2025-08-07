@@ -24,7 +24,7 @@ Import file contact_management.openapi.json ke postman atau apidog
 | Register                       | [POST] localhost:8000/api/v1/auth/register   |
 | Login                          | [POST] localhost:8000/api/v1/auth/login      |
 | Me/Profile                     | [POST] localhost:8000/api/v1/auth/me         |
-| Refresh Token                  | [POST] localhost:8000/api/v1/refresh-token   |
+| Refresh Token                  | [POST] localhost:8000/api/v1/auth/refresh-token |
 | Get All Contact With Pagination| [GET] localhost:8000/api/v1/contacts?page=1&size=10|
 | Find Contact by ID             | [GET] localhost:8000/api/v1/contacts/:id     |
 | Create Contact                 | [POST] localhost:8000/api/v1/contacts        |

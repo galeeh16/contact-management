@@ -232,10 +232,5 @@ func (ctrl *AuthController) RefreshToken(ctx *fiber.Ctx) error {
 	return utility.SuccessResponse("Refresh Token Success", fiber.Map{
 		"access_token":  jwtToken,
 		"refresh_token": refreshJwtToken,
-		"user": fiber.Map{
-			"id":       user.ID,
-			"username": user.Username,
-			"name":     user.Name,
-		},
 	}, ctx)
 }

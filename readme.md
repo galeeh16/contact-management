@@ -16,7 +16,7 @@ Ini adalah program golang untuk crud contact sederhana membuat contact.
 - Aplikasi running pada ```http://localhost:8000/```
 
 ### OpenAPI
-Import file contact_management.openapi.json ke postman atau apidog
+Import file docs/contact_management.openapi.json ke postman atau apidog atau swagger
 
 ### Endpoint Auth dan Contact
 | Keterangan                     | URL                                          |

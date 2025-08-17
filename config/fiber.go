@@ -6,8 +6,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,8 +27,21 @@ func NewFiber(logger *logrus.Logger) *fiber.App {
 	// Aktifkan kompresi untuk mengurangi ukuran respons
 	app.Use(compress.New())
 
+	// cors middleware
+	app.Use(cors.New(cors.ConfigDefault))
+
 	// middleware log method dan path url
 	app.Use(middleware.LogRequestMiddleware(logger))
+
+	cfgSwagger := swagger.Config{
+		BasePath: "/",
+		FilePath: "./docs/contact_management.openapi.json",
+		Path:     "docs",
+		Title:    "Contact Management API Docs",
+	}
+
+	// middleware swagger
+	app.Use(swagger.New(cfgSwagger))
 
 	return app
 }

@@ -82,7 +82,9 @@ func (hook *TelegramHook) Fire(entry *logrus.Entry) error {
 // Initialize logger
 func NewLogger() *logrus.Logger {
 	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+	})
 
 	// Membuat direktori logs jika belum ada
 	logDir := "logs"

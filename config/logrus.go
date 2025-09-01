@@ -98,7 +98,7 @@ func NewLogger() *logrus.Logger {
 	// Mengatur output logger ke lumberjack buat rotating
 	logger.SetOutput(&lumberjack.Logger{
 		Filename:   logFileName,
-		MaxSize:    50,   // Max size in MB
+		MaxSize:    20,   // Max size in MB
 		MaxBackups: 7,    // Max number of old log files to keep
 		MaxAge:     7,    // Max age in days to keep a log file
 		Compress:   true, // Compress old log files
